@@ -1,39 +1,29 @@
-//
-//  Cell.swift
-//  TicTacToeSwiftUI
-//
-//  Created by Nguyễn Văn Thuận on 5/12/25.
-//
 import SwiftUI
 import Foundation
-struct Cell{
+
+enum Tile {
+    case nought
+    case cross
+    case empty
+}
+
+struct Cell {
     var tile: Tile
-    func displayTile() -> String{
-        switch (tile) {
-            case Tile.Nought:
-                return "O"
-            case Tile.Cross:
-                return "X"
-            default:
-                return ""
+
+    func displayTile() -> String {
+        switch tile {
+        case .nought: return "O"
+        case .cross:  return "X"
+        case .empty:  return ""
         }
     }
-    func tileColor() -> Color{
-        switch (tile) {
-            case Tile.Nought:
-                return Color.red
-            case Tile.Cross:
-                return Color.black
-            default:
-                return Color.black
+
+    func tileColor() -> Color {
+        switch tile {
+        case .nought: return .red
+        case .cross:  return .black
+        case .empty:  return .black
         }
     }
-    
 }
-enum Tile{
-   
-    case Nought
-    case Cross
-    case Empty
-    
-}
+

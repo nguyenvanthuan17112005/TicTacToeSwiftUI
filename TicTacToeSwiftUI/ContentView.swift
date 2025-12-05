@@ -1,28 +1,45 @@
-//
-//  ContentView.swift
-//  TicTacToeSwiftUI
-//
-//  Created by Nguyễn Văn Thuận on 5/12/25.
-//
-
 import SwiftUI
 
 struct ContentView: View {
     @StateObject var gameState = GameState()
+    @State private var startingIsCross: Bool = true // true = X đi trước, false = O đi trước
     
     var body: some View {
         let borderSize: CGFloat = 5
         
-        // 1. Dùng ZStack để xếp chồng màu nền xuống dưới cùng
         ZStack {
+            Color.teal.opacity(0.3)
+                .ignoresSafeArea()
             
-            // --- MÀU NỀN CHO APP ---
-            // Bạn có thể đổi .teal thành màu khác (.blue, .gray,...) hoặc LinearGradient
-            Color.teal.opacity(0.3) // Màu xanh ngọc nhẹ
-                .ignoresSafeArea()  // Tràn lên tai thỏ và xuống dưới
-            
-            // Nội dung chính của game nằm đè lên trên
             VStack {
+                // Picker chọn ai đi trước (Segmented)
+                HStack {
+                    Text("First:")
+                        .font(.headline)
+                    Picker("", selection: $startingIsCross) {
+                        Text("X").tag(true)
+                        Text("O").tag(false)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 120)
+                    
+                    // Nút bắt đầu ván mới với lựa chọn hiện tại
+                    Button(action: {
+                        let starter: Tile = startingIsCross ? .cross : .nought
+                        gameState.resetBoard(starting: starter)
+                    }) {
+                        Text("New Round")
+                            .font(.subheadline)
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 10)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.top, 16)
+                
                 Text(gameState.turnText())
                     .font(.title)
                     .bold()
@@ -35,40 +52,44 @@ struct ContentView: View {
                     .bold()
                     .padding()
                 
-                // --- BÀN CỜ ---
                 VStack(spacing: borderSize) {
                     ForEach(0...2, id: \.self) { row in
                         HStack(spacing: borderSize) {
                             ForEach(0...2, id: \.self) { column in
-                                let cell = gameState.board[row][column]
-                                Text(cell.displayTile())
-                                    .font(.system(size: 60))
-                                    .foregroundColor(cell.tileColor())
-                                    .bold()
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .aspectRatio(1, contentMode: .fit)
-                                    .background(Color.white)
-                                    .onTapGesture {
-                                        gameState.placeTile(row, column)
-                                    }
+                                // bảo vệ index để khỏi crash (thêm guard an toàn)
+                                if row < gameState.board.count && column < gameState.board[row].count {
+                                    let cell = gameState.board[row][column]
+                                    Text(cell.displayTile())
+                                        .font(.system(size: 60))
+                                        .foregroundColor(cell.tileColor())
+                                        .bold()
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        .aspectRatio(1, contentMode: .fit)
+                                        .background(Color.white)
+                                        .onTapGesture {
+                                            gameState.placeTile(row, column)
+                                        }
+                                } else {
+                                    // fallback an toàn (không xảy ra nếu board init đúng)
+                                    Rectangle()
+                                        .foregroundColor(.white)
+                                        .aspectRatio(1, contentMode: .fit)
+                                }
                             }
                         }
                     }
                 }
-                // 2. TẠO VIỀN CHO TRÒ CHƠI
-                // Thêm padding bằng đúng độ dày viền (5), sau đó tô nền đen
-                // Lớp nền đen này sẽ hiện ra ở các khe hở (spacing) VÀ phần padding vừa thêm
                 .padding(borderSize)
                 .background(Color.black)
-                // (Tuỳ chọn) Thêm bóng đổ cho bàn cờ nổi lên
                 .shadow(radius: 10)
-                .padding() // Padding bên ngoài để bàn cờ không dính sát mép màn hình
-                
+                .padding()
                 .alert(isPresented: $gameState.showAlert) {
                     Alert(
                         title: Text(gameState.alertMessage),
                         dismissButton: .default(Text("Okay")) {
-                            gameState.resetBoard()
+                            // sau khi đóng alert, giữ người bắt đầu theo lựa chọn picker
+                            let starter: Tile = startingIsCross ? .cross : .nought
+                            gameState.resetBoard(starting: starter)
                         }
                     )
                 }
@@ -79,6 +100,24 @@ struct ContentView: View {
                     .padding()
                 
                 Spacer()
+                
+                Button(action: {
+                    // reset toàn bộ điểm và reset bàn với lựa chọn hiện tại
+                    let starter: Tile = startingIsCross ? .cross : .nought
+                    gameState.resetScore(starting: starter)
+                }){
+                    Text("Reset Scores")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.red)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        .shadow(radius: 5)
+                }
+                .padding(.horizontal, 40)
+                .padding(.bottom, 20)
             }
         }
     }
@@ -87,3 +126,4 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
+
